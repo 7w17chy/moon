@@ -1,0 +1,21 @@
+[package]
+name = "moon"
+version = "0.1.0"
+authors = ["Max Nerius <mnerius@gmx.de>"]
+edition = "2018"
+
+[lib]
+name = "moon"
+path = "src/lib.rs"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
+[dependencies]
+gl = "0.14"
+glfw = "0.37"
+
+[build-dependencies]
+gl_generator = "0.5.0"
+khronos_api = "3.1"
