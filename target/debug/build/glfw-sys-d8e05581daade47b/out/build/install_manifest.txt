@@ -1,0 +1,8 @@
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/include/GLFW/glfw3.h
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/include/GLFW/glfw3native.h
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/lib/cmake/glfw3/glfw3Config.cmake
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/lib/cmake/glfw3/glfw3ConfigVersion.cmake
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/lib/cmake/glfw3/glfw3Targets.cmake
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/lib/cmake/glfw3/glfw3Targets-debug.cmake
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/lib/pkgconfig/glfw3.pc
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/lib/libglfw3.a

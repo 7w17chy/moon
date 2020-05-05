@@ -1,0 +1,14 @@
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/CMakeFiles/install/strip.dir
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/CMakeFiles/install/local.dir
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/CMakeFiles/edit_cache.dir
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/CMakeFiles/uninstall.dir
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/CMakeFiles/rebuild_cache.dir
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/CMakeFiles/install.dir
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/CMakeFiles/list_install_components.dir
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/src/CMakeFiles/edit_cache.dir
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/src/CMakeFiles/install/strip.dir
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/src/CMakeFiles/install/local.dir
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/src/CMakeFiles/glfw.dir
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/src/CMakeFiles/rebuild_cache.dir
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/src/CMakeFiles/list_install_components.dir
+/home/dev/moon/target/debug/build/glfw-sys-d8e05581daade47b/out/build/src/CMakeFiles/install.dir

@@ -3,14 +3,22 @@ pub enum BufferState {
     Bound(u32),
 }
 
+#[derive(Default)]
 pub struct BufferManager {
+    name: u32,
     vert_buffs: Vec<BufferState>,
     ind_buffs: Vec<BufferState>,
 }
 
 impl BufferManager {
     pub fn new() -> Self {
+        let mut handle = 1;
+        let ptr: *mut u32 = &mut handle;
+        unsafe {
+            create_vert_arr(ptr);
+        }
         Self {
+            name: handle,
             vert_buffs: Vec::new(),
             ind_buffs: Vec::new(),
         }
@@ -47,18 +55,21 @@ unsafe fn create_vert_buf(positions: &mut [f32], size: usize, ptr: *mut u32) {
     // tell opengl how your data is layed out in memory.
     // std::mem::size_of::<f32> * 2 => 2 floats per vertex
     gl::VertexAttribPointer(
-        0,
+        *ptr,
         size as i32,
         gl::FLOAT,
         gl::FALSE,
         (std::mem::size_of::<f32>() * size) as i32,
-        0 as *const std::ffi::c_void,
+        std::ptr::null::<std::ffi::c_void>()
     );
     // 'bind' it on position 0
     gl::EnableVertexAttribArray(*ptr);
 }
 
-unsafe fn create_vert_arr(ptr: *mut u32) {}
+unsafe fn create_vert_arr(ptr: *mut u32) {
+    gl::GenVertexArrays(1, ptr);
+    gl::BindVertexArray(*ptr);
+}
 
 pub struct VertexBuffer<'a> {
     name: u32,
