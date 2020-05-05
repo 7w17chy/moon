@@ -1,77 +1,109 @@
-pub enum BufferState {
-    Unbound,
-    Bound(u32),
-}
+/// NYAN NYAN NYAN!
+/// ·.,¸,.·*¯`·.,¸,.·....╭━━━━╮
+///`·.,¸,.·*¯`·.,¸,.·*¯. |::::::/\:__:/\
+/// `·.,¸,.·*¯`·.,¸,.·* <|:::::(｡ ◕‿‿ ◕).
+///  `·.,¸,.·*¯`·.,¸,.·* ╰O--O----O-O
 
-#[derive(Default)]
-pub struct BufferManager {
-    name: u32,
-    vert_buffs: Vec<BufferState>,
-    ind_buffs: Vec<BufferState>,
-}
+use core::ffi::c_void;
+use std::process;
+use gl;
 
-impl BufferManager {
-    pub fn new() -> Self {
-        let mut handle = 1;
-        let ptr: *mut u32 = &mut handle;
-        unsafe {
-            create_vert_arr(ptr);
-        }
-        Self {
-            name: handle,
-            vert_buffs: Vec::new(),
-            ind_buffs: Vec::new(),
-        }
-    }
+pub mod shaders;
+pub mod buffers;
 
-    /// @param size: floats per vertex
-    /// @param positions: vertecies
-    pub fn vert_buff_new<'a>(&mut self, positions: &'a mut [f32], size: usize) -> VertexBuffer<'a> {
-        let mut handle = (self.vert_buffs.len() + 1) as u32;
-        self.vert_buffs.push(BufferState::Bound(handle));
+pub mod gl_helper_functions {
+    use gl::types::GLenum;
+
+    /// Get gl string. since gl::GetString returns a pointer to the beginning of the actual
+    /// string in bytes, you have to convert it to a Rust string before using it.
+    pub fn get_gl_string(name: GLenum) -> String {
+        let mut charbuff: Vec<u8> = Vec::new();
 
         unsafe {
-            let ptr: *mut u32 = &mut handle;
-            create_vert_buf(positions, size, ptr);
+            let mut ptr_string = gl::GetString(name);
+            while *ptr_string as char != '\0' {
+                charbuff.push(*ptr_string);
+                ptr_string = ptr_string.wrapping_add(1); // increment pointer by 1 unit, not bytes
+            }
+            charbuff.push(b'\0');   // push '\0' to indicate the end of the string
         }
 
-        VertexBuffer {
-            name: handle,
-            data: positions,
+        match String::from_utf8(charbuff) {
+            Ok(s) => s,
+            Err(e) => panic!("Error reading opengl string: {}", e),
         }
     }
 }
 
-unsafe fn create_vert_buf(positions: &mut [f32], size: usize, ptr: *mut u32) {
-    gl::GenBuffers(1, ptr);
-    gl::BindBuffer(gl::ARRAY_BUFFER, *ptr);
-    // provide information about the data stored in the buffer.
-    gl::BufferData(
-        gl::ARRAY_BUFFER,
-        (positions.len() * std::mem::size_of::<f32>()) as isize,
-        positions.as_mut_ptr() as *const core::ffi::c_void,
-        gl::STATIC_DRAW,
-    );
-    // tell opengl how your data is layed out in memory.
-    // std::mem::size_of::<f32> * 2 => 2 floats per vertex
-    gl::VertexAttribPointer(
-        *ptr,
-        size as i32,
-        gl::FLOAT,
-        gl::FALSE,
-        (std::mem::size_of::<f32>() * size) as i32,
-        std::ptr::null::<std::ffi::c_void>()
-    );
-    // 'bind' it on position 0
-    gl::EnableVertexAttribArray(*ptr);
+pub mod fileops {
+    use std::ffi::CString;
+    use std::fs;
+
+    /// Read a file and return its contents in form of a std::ffi::CString. As such, it's easier
+    /// to work with OpenGL function calls; you don't have to mess with converting it to a C-compatible
+    /// string, it's already one. Plus you can easily convert it into a Rust string.
+    pub fn read_file_into_cstring(filename: &str) -> CString {
+        match fs::read(filename) {
+            Ok(vec) => {
+                // if a \0 character is found in the file you're reading, CString::new will return a NulError
+                match CString::new(vec) {
+                    Ok(c) => return c,
+                    Err(e) => panic!("Don't put any \0 characters in your file, lad! {}", e),
+                };
+            }
+            // you could match on the returned ErrorKind val, but for now, let's panic!
+            Err(e) => panic!("Can't read file! {}", e),
+        };
+    }
 }
 
-unsafe fn create_vert_arr(ptr: *mut u32) {
-    gl::GenVertexArrays(1, ptr);
-    gl::BindVertexArray(*ptr);
-}
+/// Callback function for glDebugMessageCallback.
+#[allow(unused_variables)]
+pub extern "system" fn callbackfn(source: u32, gltype: u32, id: u32, severity: u32, len: i32,
+                              message: *const i8, userparams: *mut c_void)
+{
+    let mut charbuff: Vec<u8> = Vec::new();
+    let mut counter = 0; // counts up to the length of 'message'
+    let mut ptr = message; // can't increment message itself, so increment a copy of it...
 
-pub struct VertexBuffer<'a> {
-    name: u32,
-    data: &'a [f32],
+    unsafe {
+        while counter < len {
+            charbuff.push(*ptr as u8);
+            ptr = ptr.wrapping_add(1); // increment pointer by 1 unit, not bytes
+            counter += 1;
+        }
+    }
+
+    if severity == gl::DEBUG_SEVERITY_MEDIUM { eprintln!("Keep going. Severity level: DEBUG_SEVERITY_MEDIUM"); }
+    else if severity == gl::DEBUG_SEVERITY_LOW { eprintln!("Keep going. Severity level: DEBUG_SEVERITY_LOW"); }
+    else if severity == gl::DEBUG_SEVERITY_NOTIFICATION { eprintln!("Keep going. Severity level: DEBUG_SEVERITY_NOTIFICATION"); }
+
+    if source == gl::DEBUG_SOURCE_API { eprintln!("Source: DEBUG_SOURCE_API"); }
+    else if source == gl::DEBUG_SOURCE_WINDOW_SYSTEM { eprintln!("Source: DEBUG_SOURCE_WINDOW_SYSTEM"); }
+    else if source == gl::DEBUG_SOURCE_SHADER_COMPILER { eprintln!("Source: DEBUG_SOURCE_SHADER_COMPILER"); }
+    else if source == gl::DEBUG_SOURCE_THIRD_PARTY { eprintln!("Source: DEBUG_SOURCE_THIRD_PARTY"); }
+    else if source == gl::DEBUG_SOURCE_APPLICATION { eprintln!("Source: DEBUG_SOURCE_APPLICATION"); }
+    else if source == gl::DEBUG_SOURCE_OTHER { eprintln!("Source: DEBUG_SOURCE_OTHER"); }
+
+    if gltype == gl::DEBUG_TYPE_ERROR { eprintln!("Type: DEBUG_TYPE_ERROR"); }
+    else if gltype == gl::DEBUG_TYPE_DEPRECATED_BEHAVIOR { eprintln!("Type: DEBUG_TYPE_DEPRECATED_BEHAVIOR"); }
+    else if gltype == gl::DEBUG_TYPE_UNDEFINED_BEHAVIOR { eprintln!("Type: DEBUG_TYPE_UNDEFINED_BEHAVIOR"); }
+    else if gltype == gl::DEBUG_TYPE_PORTABILITY { eprintln!("Type: DEBUG_TYPE_PORTABILITY"); }
+    else if gltype == gl::DEBUG_TYPE_PERFORMANCE { eprintln!("Type: DEBUG_TYPE_PERFORMANCE"); }
+    else if gltype == gl::DEBUG_TYPE_MARKER { eprintln!("Type: DEBUG_TYPE_MARKER"); }
+    else if gltype == gl::DEBUG_TYPE_PUSH_GROUP { eprintln!("Type: DEBUG_TYPE_PUSH_GROUP"); }
+    else if gltype == gl::DEBUG_TYPE_POP_GROUP { eprintln!("Type: DEBUG_TYPE_POP_GROUP"); }
+    else if gltype == gl::DEBUG_TYPE_OTHER { eprintln!("Type: DEBUG_TYPE_OTHER"); }
+
+    let mess = match String::from_utf8(charbuff) {
+        Ok(st) => st,
+        Err(e) => panic!("GL error occurred (type: {:#x}), but was unable to convert the error message to a proper string! {}",
+                         gltype, e),
+    };
+
+    eprintln!("Id: {:#x}\nMessage: {}", id, mess);
+    if severity == gl::DEBUG_SEVERITY_HIGH {
+        eprintln!("aborting due to error (gl::DEBUG_SEVERITY_HIGH)");
+        process::exit(1);
+    }
 }
