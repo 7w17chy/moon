@@ -1,9 +1,9 @@
-use glfw::{Action, Context, Key, WindowHint};
 use core::ffi::c_void;
+use glfw::{Action, Context, Key, WindowHint};
 
-use ::moon::buffers;
-use ::moon::shaders;
-use ::moon::gl_helper_functions;
+use moon::buffers;
+use moon::gl_helper_functions;
+use moon::shaders;
 
 #[allow(unused_variables)]
 fn main() {
@@ -12,7 +12,8 @@ fn main() {
 
     glfw.window_hint(WindowHint::OpenGlDebugContext(true));
 
-    let (mut window, events) = glfw.create_window(300, 300, "Hello, world!", glfw::WindowMode::Windowed)
+    let (mut window, events) = glfw
+        .create_window(300, 300, "Hello, world!", glfw::WindowMode::Windowed)
         .expect("Failed to create GLFW window.");
 
     window.set_key_polling(true);
@@ -28,28 +29,21 @@ fn main() {
     }
 
     // print version of opengl to verify everything's setup correctly
-    println!("OpenGL version: {}", gl_helper_functions::get_gl_string(gl::VERSION));
+    println!(
+        "OpenGL version: {}",
+        gl_helper_functions::get_gl_string(gl::VERSION)
+    );
 
     // vertex positions
-    let mut positions: Vec<f32> = vec![
-        -0.5, -0.5,
-         0.5, -0.5,
-         0.5,  0.5,
-        -0.5,  0.5
-    ];
+    let mut positions: Vec<f32> = vec![-0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5];
 
     // indices for index buffer
-    let mut indices: Vec<u32> = vec![
-        0, 1, 2,
-        2, 3, 0
-    ];
+    let mut indices: Vec<u32> = vec![0, 1, 2, 2, 3, 0];
 
     // buffer creation
     let mut buffman = buffers::BufferManager::new();
     let vertbuff = buffman.vert_buff_new(&mut positions, 2);
     let indbuff = buffman.ind_buff_new(&mut indices);
-
-    println!("Vertex name: {}", vertbuff.name);
 
     // get source for shaders
     let fragment_source = shaders::ShaderSource::from_file("fragment.glsl");
@@ -63,7 +57,12 @@ fn main() {
         unsafe {
             gl::Clear(gl::COLOR_BUFFER_BIT);
             //gl::DrawArrays(gl::TRIANGLES, 0, (positions.len()/2) as i32);
-            gl::DrawElements(gl::TRIANGLES, indices.len() as i32, gl::UNSIGNED_INT, 0 as *const _);
+            gl::DrawElements(
+                gl::TRIANGLES,
+                indices.len() as i32,
+                gl::UNSIGNED_INT,
+                0 as *const _,
+            );
         }
         // swap front and back buffers
         window.swap_buffers();
@@ -78,9 +77,7 @@ fn main() {
 
 fn handle_window_event(window: &mut glfw::Window, event: glfw::WindowEvent) {
     match event {
-        glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-            window.set_should_close(true)
-        }
+        glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => window.set_should_close(true),
         _ => {}
     }
 }
