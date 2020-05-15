@@ -31,7 +31,8 @@ impl BufferManager {
 
         unsafe {
             let ptr: *mut u32 = &mut handle;
-            create_vert_buff(positions, size, ptr);
+            // handle = the vertbuffs name + the index in the vert_buffs vec
+            create_vert_buff(positions, size, ptr, handle);
         }
 
         VertexBuffer {
@@ -56,7 +57,7 @@ impl BufferManager {
     }
 }
 
-unsafe fn create_vert_buff(positions: &mut [f32], size: usize, ptr: *mut u32) {
+unsafe fn create_vert_buff(positions: &mut [f32], size: usize, ptr: *mut u32, buffcount: u32) {
     gl::GenBuffers(1, ptr);
     gl::BindBuffer(gl::ARRAY_BUFFER, *ptr);
     // provide information about the data stored in the buffer.
@@ -70,7 +71,7 @@ unsafe fn create_vert_buff(positions: &mut [f32], size: usize, ptr: *mut u32) {
     // std::mem::size_of::<f32> * 2 => 2 floats per vertex
     // the first param (0) refers to the last buffer bound.
     gl::VertexAttribPointer(
-        0,
+        buffcount,
         size as i32,
         gl::FLOAT,
         gl::FALSE,
@@ -78,7 +79,7 @@ unsafe fn create_vert_buff(positions: &mut [f32], size: usize, ptr: *mut u32) {
         std::ptr::null::<std::ffi::c_void>(),
     );
     // 'bind' it on position 0
-    gl::EnableVertexAttribArray(0);
+    gl::EnableVertexAttribArray(buffcount);
 }
 
 unsafe fn create_ind_buff(ptr: *mut u32, indices: &mut [u32], size: usize) {
@@ -102,7 +103,19 @@ pub struct VertexBuffer<'a> {
     data: &'a [f32],
 }
 
+impl<'a> VertexBuffer<'a> {
+    pub fn data_len(&self) -> i32 {
+        self.data.len() as i32
+    }
+}
+
 pub struct IndexBuffer<'a> {
     pub name: u32,
     indices: &'a [u32],
+}
+
+impl<'a> IndexBuffer<'a> {
+    pub fn data_len(&self) -> i32 {
+        self.indices.len() as i32
+    }
 }

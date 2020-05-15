@@ -4,9 +4,9 @@ use std::ffi::CString;
 /// A shader for 2d applications.
 pub struct Shader2D {
     /// The 'name' or 'id' of the shader
-    pub handle: u32,        
+    pub handle: u32,
     /// Will be 'true' when bound.
-    pub is_bound: bool,     
+    pub is_bound: bool,
 }
 
 /// Holds a CString that contains source code for a shader. Why a own struct just for that purpose?
@@ -17,13 +17,15 @@ pub struct Shader2D {
 /// on a seperate thread or on startup for later usage.
 pub struct ShaderSource {
     /// String that contains source code for a shader.
-    pub src: CString,       
+    pub src: CString,
 }
 
 impl ShaderSource {
     /// Create a ShaderSource instance from a file.
     pub fn from_file(filename: &str) -> Self {
-        Self { src: super::fileops::read_file_into_cstring(filename), }
+        Self {
+            src: super::fileops::read_file_into_cstring(filename),
+        }
     }
 
     /// Create a ShaderSource instance from a Rust string.
@@ -34,12 +36,14 @@ impl ShaderSource {
             Err(e) => panic!("Don't put an trailing '\0' in your source, lad! {}", e),
         };
 
-        Self { src: cstring, }
+        Self { src: cstring }
     }
 
     /// Create a ShaderSource instance form a Vec<u8>
     pub fn from_byte_vec(src: Vec<u8>) -> Self {
-        Self { src: unsafe { CString::from_vec_unchecked(src) }, }
+        Self {
+            src: unsafe { CString::from_vec_unchecked(src) },
+        }
     }
 }
 
@@ -52,7 +56,7 @@ unsafe fn compile_shader(kind: GLenum, source: ShaderSource) -> u32 {
     gl::CompileShader(id);
 
     // TODO: Error handling (-> compilation errors)
-    
+
     id
 }
 
@@ -60,7 +64,7 @@ impl Shader2D {
     /// Create a shader program (vertex and fragment shader linked together) and bind it.
     pub fn new(fragment_source: ShaderSource, vertex_source: ShaderSource) -> Shader2D {
         let handle: u32; // the 'name' or 'id' of the shader
-        
+
         unsafe {
             handle = gl::CreateProgram();
             let fs = compile_shader(gl::FRAGMENT_SHADER, fragment_source);
@@ -76,26 +80,30 @@ impl Shader2D {
             gl::DeleteShader(fs);
             gl::DeleteShader(vs);
         }
-        
+
         Shader2D {
             handle,
-            is_bound: true, // shader was bound in the process of creating it 
+            is_bound: true, // shader was bound in the process of creating it
         }
     }
 
     /// Bind shader. If it's already bound, do nothing.
     pub fn bind(&mut self) {
         if self.is_bound {
-            return;         // if it's already bound, do nothing
+            return; // if it's already bound, do nothing
         }
         self.is_bound = true;
-        unsafe { gl::UseProgram(self.handle); }
+        unsafe {
+            gl::UseProgram(self.handle);
+        }
     }
 
     /// Get location of a uniform in the shader by its name. Shader must be bound. If it's not, the
     /// function will throw an error.
     pub fn get_uniform_location(&self, name: *const i8) -> Result<i32, &'static str> {
-        if !self.is_bound { return Err("Shader must be bound!"); }
+        if !self.is_bound {
+            return Err("Shader must be bound!");
+        }
 
         unsafe { Ok(gl::GetUniformLocation(self.handle, name)) }
     }

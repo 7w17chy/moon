@@ -3,6 +3,7 @@ use glfw::{Action, Context, Key, WindowHint};
 
 use moon::buffers;
 use moon::gl_helper_functions;
+use moon::renderer;
 use moon::shaders;
 
 #[allow(unused_variables)]
@@ -13,7 +14,7 @@ fn main() {
     glfw.window_hint(WindowHint::OpenGlDebugContext(true));
 
     let (mut window, events) = glfw
-        .create_window(300, 300, "Hello, world!", glfw::WindowMode::Windowed)
+        .create_window(300, 300, "moon Sandbox", glfw::WindowMode::Windowed)
         .expect("Failed to create GLFW window.");
 
     window.set_key_polling(true);
@@ -54,18 +55,10 @@ fn main() {
 
     // main loop
     while !window.should_close() {
-        unsafe {
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-            //gl::DrawArrays(gl::TRIANGLES, 0, (positions.len()/2) as i32);
-            gl::DrawElements(
-                gl::TRIANGLES,
-                indices.len() as i32,
-                gl::UNSIGNED_INT,
-                0 as *const _,
-            );
-        }
         // swap front and back buffers
         window.swap_buffers();
+
+        renderer::render_triangle_2d(&vertbuff, &indbuff, &shader);
 
         // poll for any events
         glfw.poll_events();
