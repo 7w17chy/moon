@@ -1,10 +1,10 @@
 use core::ffi::c_void;
 use glfw::{Action, Context, Key, WindowHint};
 
-use moon::buffers;
 use moon::gl_helper_functions;
 use moon::renderer;
 use moon::shaders;
+use moon::buffers;
 
 #[allow(unused_variables)]
 fn main() {
@@ -42,9 +42,6 @@ fn main() {
     let mut indices: Vec<u32> = vec![0, 1, 2, 2, 3, 0];
 
     // buffer creation
-    let mut buffman = buffers::BufferManager::new();
-    let vertbuff = buffman.vert_buff_new(&mut positions, 2);
-    let indbuff = buffman.ind_buff_new(&mut indices);
 
     // get source for shaders
     let fragment_source = shaders::ShaderSource::from_file("fragment.glsl");

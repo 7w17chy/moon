@@ -1,121 +1,107 @@
-pub enum BufferState {
-    Unbound,
-    Bound(u32),
-}
+pub mod buffer {
+    use std::convert::TryInto;
+    use super::util;
 
-pub struct BufferManager {
-    pub name: u32,
-    vert_buffs: Vec<BufferState>,
-    ind_buffs: Vec<BufferState>,
-}
+    pub enum BufferState {
+        Unbound,
+        Bound(usize),
+    }
 
-impl BufferManager {
-    pub fn new() -> Self {
-        let mut handle = 0;
-        let ptr: *mut u32 = &mut handle;
-        unsafe {
-            create_vert_arr(ptr);
+    pub struct BufferManager<I, V> 
+    where I: BufferData,
+          V: BufferData 
+    {
+        pub name: u32,
+        vertex: Vec<Buffer<V>>,
+        index: Vec<Buffer<I>>,
+    }
+
+    impl<I, V> BufferManager<I, V> 
+    where I: BufferData,
+          V: BufferData 
+    {
+        pub fn new() -> BufferManager<I, V> {
+            let mut n = 0u32;
+            unsafe { util::create_vert_arr(&mut n as *mut u32); }
+            Self { name: n, vertex: Vec::new(), index: Vec::new() }
         }
-        Self {
-            name: handle,
-            vert_buffs: Vec::new(),
-            ind_buffs: Vec::new(),
+
+        pub fn vertex_buffer(&mut self, mut data: Vec<V>) {
+            let mut name = 0u32;
+            // buffer is going to be bound at position 'nth' in the vertex array
+            let nth = self.vertex.len() + 1;
+            let unth: u32 = nth.try_into().unwrap();
+            let size = data.len();
+            unsafe { util::create_vert_buff(&mut data[..], size, &mut name as *mut u32, unth); }
+            let buffer: Buffer<V> = Buffer { name, state: BufferState::Bound(nth), data };
+            self.vertex.push(buffer);
+        }
+
+        pub fn index_buffer(&mut self, mut data: Vec<I>) {
+            let mut name = 0u32;
+            // buffer is going to be bound at position 'nth' in the vertex array
+            let nth = self.index.len() + 1;
+            let size = data.len();
+            unsafe { util::create_ind_buff(&mut name as *mut u32, &mut data[..], size); }
+            let buffer: Buffer<I> = Buffer { name, state: BufferState::Bound(nth), data };
+            self.index.push(buffer);
         }
     }
 
-    /// @param size: floats per vertex
-    /// @param positions: vertecies
-    pub fn vert_buff_new<'a>(&mut self, positions: &'a mut [f32], size: usize) -> VertexBuffer<'a> {
-        let mut handle = self.vert_buffs.len() as u32;
-        self.vert_buffs.push(BufferState::Bound(handle));
-
-        unsafe {
-            let ptr: *mut u32 = &mut handle;
-            // handle = the vertbuffs name + the index in the vert_buffs vec
-            create_vert_buff(positions, size, ptr, handle);
-        }
-
-        VertexBuffer {
-            name: handle,
-            data: positions,
-        }
+    pub struct Buffer<T: BufferData> {
+        pub name: u32,
+        pub state: BufferState,
+        pub data: Vec<T>,
     }
 
-    pub fn ind_buff_new<'a>(&mut self, indices: &'a mut [u32]) -> IndexBuffer<'a> {
-        let mut handle = self.ind_buffs.len() as u32;
-        self.ind_buffs.push(BufferState::Bound(handle));
+    pub trait BufferData {}
+    impl BufferData for f32 {}
+    impl BufferData for u32 {}
+}
 
-        unsafe {
-            let ptr: *mut u32 = &mut handle;
-            create_ind_buff(ptr, indices, indices.len());
-        }
-
-        IndexBuffer {
-            name: handle,
-            indices,
-        }
+mod util {
+    pub unsafe fn create_vert_arr(ptr: *mut u32) {
+        gl::GenVertexArrays(1, 0 as *mut _);
+        gl::BindVertexArray(0);
     }
-}
 
-unsafe fn create_vert_buff(positions: &mut [f32], size: usize, ptr: *mut u32, buffcount: u32) {
-    gl::GenBuffers(1, ptr);
-    gl::BindBuffer(gl::ARRAY_BUFFER, *ptr);
-    // provide information about the data stored in the buffer.
-    gl::BufferData(
-        gl::ARRAY_BUFFER,
-        (positions.len() * std::mem::size_of::<f32>()) as isize,
-        positions.as_mut_ptr() as *const core::ffi::c_void,
-        gl::STATIC_DRAW,
-    );
-    // tell opengl how your data is layed out in memory.
-    // std::mem::size_of::<f32> * 2 => 2 floats per vertex
-    // the first param (0) refers to the last buffer bound.
-    gl::VertexAttribPointer(
-        buffcount,
-        size as i32,
-        gl::FLOAT,
-        gl::FALSE,
-        (std::mem::size_of::<f32>() * size) as i32,
-        std::ptr::null::<std::ffi::c_void>(),
-    );
-    // 'bind' it on position 0
-    gl::EnableVertexAttribArray(buffcount);
-}
-
-unsafe fn create_ind_buff(ptr: *mut u32, indices: &mut [u32], size: usize) {
-    gl::GenBuffers(1, ptr);
-    gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, *ptr);
-    gl::BufferData(
-        gl::ELEMENT_ARRAY_BUFFER,
-        (size * std::mem::size_of::<u32>()) as isize,
-        indices.as_mut_ptr() as *const std::ffi::c_void,
-        gl::STATIC_DRAW,
-    );
-}
-
-unsafe fn create_vert_arr(ptr: *mut u32) {
-    gl::GenVertexArrays(1, 0 as *mut _);
-    gl::BindVertexArray(0);
-}
-
-pub struct VertexBuffer<'a> {
-    pub name: u32,
-    data: &'a [f32],
-}
-
-impl<'a> VertexBuffer<'a> {
-    pub fn data_len(&self) -> i32 {
-        self.data.len() as i32
+    pub unsafe fn create_vert_buff<T>(positions: &mut [T], size: usize, ptr: *mut u32, buffcount: u32) 
+    where T: super::buffer::BufferData 
+    {
+        gl::GenBuffers(1, ptr);
+        gl::BindBuffer(gl::ARRAY_BUFFER, *ptr);
+        // provide information about the data stored in the buffer.
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            (positions.len() * std::mem::size_of::<f32>()) as isize,
+            positions.as_mut_ptr() as *const core::ffi::c_void,
+            gl::STATIC_DRAW,
+        );
+        // tell opengl how your data is layed out in memory.
+        // std::mem::size_of::<f32> * 2 => 2 floats per vertex
+        // the first param (0) refers to the last buffer bound.
+        gl::VertexAttribPointer(
+            buffcount,
+            size as i32,
+            gl::FLOAT,
+            gl::FALSE,
+            (std::mem::size_of::<f32>() * size) as i32,
+            std::ptr::null::<std::ffi::c_void>(),
+        );
+        // 'bind' it on position 0
+        gl::EnableVertexAttribArray(buffcount);
     }
-}
 
-pub struct IndexBuffer<'a> {
-    pub name: u32,
-    indices: &'a [u32],
-}
-
-impl<'a> IndexBuffer<'a> {
-    pub fn data_len(&self) -> i32 {
-        self.indices.len() as i32
+    pub unsafe fn create_ind_buff<T>(ptr: *mut u32, indices: &mut [T], size: usize)
+    where T: super::buffer::BufferData 
+    {
+        gl::GenBuffers(1, ptr);
+        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, *ptr);
+        gl::BufferData(
+            gl::ELEMENT_ARRAY_BUFFER,
+            (size * std::mem::size_of::<u32>()) as isize,
+            indices.as_mut_ptr() as *const std::ffi::c_void,
+            gl::STATIC_DRAW,
+        );
     }
 }

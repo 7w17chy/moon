@@ -1,7 +1,6 @@
 use png::Decoder;
 use std::error::Error;
 use std::fs::File;
-use std::io;
 
 pub fn load_image_rgba(filepath: &str) -> Result<Vec<u8>, Box<dyn Error>> {
     // open png file
