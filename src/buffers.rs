@@ -31,8 +31,7 @@ pub mod buffer {
             // buffer is going to be bound at position 'nth' in the vertex array
             let nth = self.vertex.len() + 1;
             let unth: u32 = nth.try_into().unwrap();
-            let size = data.len();
-            unsafe { util::create_vert_buff(&mut data[..], size, &mut name as *mut u32, unth); }
+            unsafe { util::create_vert_buff(&mut name as *mut u32, &mut data[..], 2, unth); }
             let buffer: Buffer<V> = Buffer { name, state: BufferState::Bound(nth), data };
             self.vertex.push(buffer);
         }
@@ -45,6 +44,17 @@ pub mod buffer {
             unsafe { util::create_ind_buff(&mut name as *mut u32, &mut data[..], size); }
             let buffer: Buffer<I> = Buffer { name, state: BufferState::Bound(nth), data };
             self.index.push(buffer);
+        }
+
+        pub fn last_bound_index_buffer(&self) -> Option<&Buffer<I>> {
+            let mut i: usize = self.index.len() - 1;
+            let min: usize = 0;
+            while i >= min {
+                if let BufferState::Bound(_) = self.index[i].state { return Some(&self.index[i]); }
+                i = i - 1;
+            }
+
+            None
         }
     }
 
@@ -60,12 +70,12 @@ pub mod buffer {
 }
 
 mod util {
-    pub unsafe fn create_vert_arr(ptr: *mut u32) {
+    pub unsafe fn create_vert_arr(_ptr: *mut u32) {
         gl::GenVertexArrays(1, 0 as *mut _);
         gl::BindVertexArray(0);
     }
 
-    pub unsafe fn create_vert_buff<T>(positions: &mut [T], size: usize, ptr: *mut u32, buffcount: u32) 
+    pub unsafe fn create_vert_buff<T>(ptr: *mut u32, positions: &mut [T], size: usize, buffcount: u32) 
     where T: super::buffer::BufferData 
     {
         gl::GenBuffers(1, ptr);

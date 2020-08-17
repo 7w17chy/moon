@@ -4,7 +4,7 @@ use glfw::{Action, Context, Key, WindowHint};
 use moon::gl_helper_functions;
 use moon::renderer;
 use moon::shaders;
-use moon::buffers;
+use moon::buffers::buffer;
 
 #[allow(unused_variables)]
 fn main() {
@@ -36,12 +36,15 @@ fn main() {
     );
 
     // vertex positions
-    let mut positions: Vec<f32> = vec![-0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5];
+    let positions: Vec<f32> = vec![-0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5];
 
     // indices for index buffer
-    let mut indices: Vec<u32> = vec![0, 1, 2, 2, 3, 0];
+    let indices: Vec<u32> = vec![0, 1, 2, 2, 3, 0];
 
     // buffer creation
+    let mut bmanager = buffer::BufferManager::new();
+    bmanager.vertex_buffer(positions);
+    bmanager.index_buffer(indices);
 
     // get source for shaders
     let fragment_source = shaders::ShaderSource::from_file("fragment.glsl");
@@ -55,7 +58,7 @@ fn main() {
         // swap front and back buffers
         window.swap_buffers();
 
-        renderer::render_triangle_2d(&vertbuff, &indbuff, &shader);
+        renderer::render_triangle_2d(&bmanager);
 
         // poll for any events
         glfw.poll_events();
